@@ -1,2 +1,2 @@
 # survival-typescript
-『サバイバルTypeScrip』（https://typescriptbook.jp/）の学習記録
+『サバイバルTypeScrip』 (https://typescriptbook.jp) の学習記録
