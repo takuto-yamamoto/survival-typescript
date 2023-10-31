@@ -213,3 +213,145 @@ async function takes5Seconds(): Promise<number> {
 //     takes5Seconds(),
 //   ]);
 // };
+
+/** enum: 列挙型 */
+enum Position {
+  Top,
+  Bottom,
+  Right,
+  Left,
+}
+//// 以下が行われているのでPosition.Top=0だしPosition[0]='Top'（逆引きのサポート）
+// var Position;
+// (function (Position) {
+//   Position[(Position['Top'] = 0)] = 'Top';
+//   Position[(Position['Bottom'] = 1)] = 'Bottom';
+//   Position[(Position['Right'] = 2)] = 'Right';
+//   Position[(Position['Left'] = 3)] = 'Left';
+// } (Position || (Position = {})));
+
+/** 初期値は0からの連番だが、数字を入れると以降はそこからの連番 */
+enum Position2 {
+  Top, // 0
+  Bottom, // 1
+  Right, // 2
+  Left, // 3
+}
+enum Position3 {
+  Top = 1,
+  Bottom, // 2
+  Right, // 3
+  Left, // 4
+}
+
+/** 文字列も代入可能 */
+enum Direction {
+  Up = 'UP',
+  Down = 'DOWN',
+  Left = 'LEFT',
+  Right = 'RIGHT',
+}
+
+/** 使いどころ: グローバル定数とか */
+enum Constants {
+  API_URL = 'https://api.example.com',
+  MAX_RETRIES = 3,
+  TIMEOUT = 5000,
+}
+
+/**
+ * 課題
+ * - 数値型enumの型安全性：数値ならなんでも代入できてしまう（TS5.0未満）
+ * - 数値型enumでは存在しない値でアクセスしてもコンパイルエラーにならない
+ * - 文字列だけ公称型
+ *
+ * ベストプラクティス：以下の要件がない時はオブジェクトリテラルかユニオンで書く
+ * - 値から数値の逆引きも欲しい時
+ */
+// as constで再帰的にReadOnlyとする
+const Flag = {
+  None: 0,
+  Read: 1 << 0,
+  Write: 1 << 1,
+  Execute: 1 << 2,
+} as const;
+// Flagのtype相当のオブジェクトから、キーに対する値をユニオンで取得する
+type Flag = (typeof Flag)[keyof typeof Flag]; // 0 | 1 | 2 | 4
+
+/** ユニオン型と絞り込み */
+const maybeUserId: string | null = localStorage.getItem('userId');
+// // nullかもしれないので、代入できない。
+// const userId: string = maybeUserId;
+// // 代入するにはユニオン型を絞り込む
+if (typeof maybeUserId === 'string') {
+  const userId: string = maybeUserId;
+}
+
+/**
+ * 判別可能なユニオン型
+ * - オブジェクトの型で構成されたユニオン型を持つとき、絞り込みの分岐ロジックが複雑になる場合に使用
+ * - 判別可能な（ユニークな値をもつ）キーを設定する
+ */
+type UploadStatus = InProgress | Success | Failure;
+type InProgress = { type: 'InProgress'; progress: number };
+type Success = { type: 'Success' };
+type Failure = { type: 'Failure'; error: Error };
+
+function printStatus(status: UploadStatus) {
+  switch (status.type) {
+    case 'InProgress':
+      console.log(`アップロード中:${status.progress}%`);
+      break;
+    case 'Success':
+      console.log('アップロード成功', status);
+      break;
+    case 'Failure':
+      console.log(`アップロード失敗:${status.error.message}`);
+      break;
+    default:
+      console.log('不正なステータス: ', status);
+  }
+}
+
+/** インターセクション型で型をがっちゃんこする（ユニオンORのAND版） */
+// 全プロパティを必須とするRequiredユーティリティ
+type Mandatory = Required<{
+  id: string;
+  active: boolean;
+  balance: number;
+  surname: string;
+  givenName: string;
+  email: string;
+}>;
+// 全プロパティを任意とするPartialユーティリティ
+type Optional = Partial<{
+  index: number;
+  photo: string;
+  age: number;
+  company: string;
+  phoneNumber: string;
+  address: string;
+}>;
+// これをがっちゃんこすることで型の可読性向上
+type Parameter = Mandatory & Optional;
+
+/** 型アサーション（基本的に避ける） */
+const value: string | number = 'this is a string';
+const strLength: number = (value as string).length; // ここのvalueはstringとしてコンパイルして！信じて！
+
+/** constアサーションでオブジェクトプロパティを再帰的にreadonlyにする */
+const pikachu = {
+  name: 'pikachu',
+  no: 25,
+  genre: 'mouse pokémon',
+  height: 0.4,
+  weight: 6.0,
+} as const;
+
+/**
+ * 割り当て済みassertion（基本的に使用しない）
+ * - let num!: number; // 以降undefinedかどうかは気にしないで！
+ * - console.log(num! * 2) // undefinedじゃないから気にしないで！
+ */
+
+/** nullやarrayはobject型なのでtypeof演算子注意、!== nullやArray.isArray()を使う */
